@@ -35,14 +35,18 @@ jobs:
           echo "Waiting for LocalTunnel URL..."
           sleep 2
         done
-        echo "LocalTunnel URL: $(cat lt-url.txt)" >> output.txt
-      env:
-        LT_SUBDOMAIN: your-subdomain # Optional: Replace with a unique subdomain  
+        LT_URL=$(cat lt-url.txt)
+        echo "::add-mask::$LT_URL"  # Mask URL
+        echo "LT_URL=$LT_URL" >> $GITHUB_ENV
 
     - name: Get IP Addresses
       run: |
         PRIVATE_IP=$(hostname -I | awk '{print $1}')
         PUBLIC_IP=$(curl -s -4 ifconfig.me)
+
+        echo "::add-mask::$PRIVATE_IP"  # Mask private IP
+        echo "::add-mask::$PUBLIC_IP"   # Mask public IP
+
         echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
         echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
@@ -50,8 +54,7 @@ jobs:
       run: |
         TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
         TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
-        LT_URL=$(cat lt-url.txt)
-
+        
         # Escape special characters for MarkdownV2
         ESCAPED_LT_URL=$(echo "$LT_URL" | sed 's/\./\\./g')
         ESCAPED_PRIVATE_IP=$(echo "$PRIVATE_IP" | sed 's/\./\\./g')
