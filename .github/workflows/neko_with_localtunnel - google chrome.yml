@@ -53,11 +53,11 @@ jobs:
         TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
         LT_URL=$(cat lt-url.txt)
 
-        MESSAGE="🚀 *Neko Chrome is Now Live!*\n\n"
-        MESSAGE+="🌍 *LocalTunnel URL:* \n\`$LT_URL\`\n\n"
-        MESSAGE+="🔐 *Private IP:* \n\`$PRIVATE_IP\`\n\n"
-        MESSAGE+="🌎 *Public IP:* \n\`$PUBLIC_IP\`\n\n"
-        MESSAGE+="📌 Click to copy the IPs or URL."
+        MESSAGE="🚀 *Neko Chrome is Now Live\\!*\\n\\n"
+        MESSAGE+="🌍 *LocalTunnel URL:* \\n\`$LT_URL\`\\n\\n"
+        MESSAGE+="🔐 *Private IP:* \\n\`$PRIVATE_IP\`\\n\\n"
+        MESSAGE+="🌎 *Public IP:* \\n\`$PUBLIC_IP\`\\n\\n"
+        MESSAGE+="📌 Click to copy the IPs or URL\\."
 
         curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
         -d "chat_id=$TELEGRAM_USER_ID" \
