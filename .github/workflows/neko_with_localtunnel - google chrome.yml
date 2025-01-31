@@ -1,4 +1,4 @@
-name: Neko Docker with LocalTunnel - google chrome (Manual Trigger)
+name: Neko Docker with LocalTunnel - Google Chrome (Manual Trigger)
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -25,10 +25,44 @@ jobs:
     - name: Verify container is running
       run: docker ps
 
-    - name: Install tmole
+    - name: Install LocalTunnel
+      run: npm install -g localtunnel
+
+    - name: Expose container with LocalTunnel
       run: |
-        curl -O https://install.tunnelmole.com/n3d5g/install && sudo bash install
-        tmole 8080
+        lt --port 8080 > lt-url.txt &
+        # Wait until lt-url.txt exists and is not empty
+        while [ ! -s lt-url.txt ]; do
+          echo "Waiting for LocalTunnel URL..."
+          sleep 2
+        done
+        echo "LocalTunnel URL: $(cat lt-url.txt)" >> output.txt
+      env:
+        LT_SUBDOMAIN: your-subdomain # Optional: Replace with a unique subdomain  
+
+    - name: Get IP Addresses
+      run: |
+        PRIVATE_IP=$(hostname -I | awk '{print $1}')
+        PUBLIC_IP=$(curl -s -4 ifconfig.me)
+        echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
+        echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+    - name: Send LocalTunnel URL & IP to Telegram
+      run: |
+        TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
+        TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
+        LT_URL=$(cat lt-url.txt)
+
+        MESSAGE="🚀 *Neko Chrome is Now Live!*\n\n"
+        MESSAGE+="🌍 *LocalTunnel URL:* \n\`$LT_URL\`\n\n"
+        MESSAGE+="🔐 *Private IP:* \n\`$PRIVATE_IP\`\n\n"
+        MESSAGE+="🌎 *Public IP:* \n\`$PUBLIC_IP\`\n\n"
+        MESSAGE+="📌 Click to copy the IPs or URL."
+
+        curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+        -d "chat_id=$TELEGRAM_USER_ID" \
+        -d "text=$MESSAGE" \
+        -d "parse_mode=MarkdownV2"
 
     - name: Sleep for 6 hours
       run: sleep 21600 # 6 hours in seconds
