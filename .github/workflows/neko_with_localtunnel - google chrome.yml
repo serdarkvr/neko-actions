@@ -36,9 +36,7 @@ jobs:
           echo "Waiting for LocalTunnel URL..."
           sleep 2
         done
-
-# Print the LocalTunnel URL
-echo "LocalTunnel URL: $(cat lt-url.txt)"
+        echo "LocalTunnel URL: $(cat lt-url.txt)"
       env:
         LT_SUBDOMAIN: your-subdomain # Optional: Replace with a unique subdomain
 
