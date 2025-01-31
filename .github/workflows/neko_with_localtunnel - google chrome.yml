@@ -25,26 +25,6 @@ jobs:
     - name: Verify container is running
       run: docker ps
 
-    - name: Install LocalTunnel
-      run: npm install -g localtunnel
-
-    - name: Expose container with LocalTunnel
-      run: |
-        lt --port 8080 > lt-url.txt &
-        # Wait until lt-url.txt exists and is not empty
-        while [ ! -s lt-url.txt ]; do
-          echo "Waiting for LocalTunnel URL..."
-          sleep 2
-        done
-        echo "LocalTunnel URL: $(cat lt-url.txt)"
-      env:
-        LT_SUBDOMAIN: your-subdomain # Optional: Replace with a unique subdomain  
-
-    - name: Print IP address of the machine
-      run: |
-        echo "Private IP address: $(hostname -I | awk '{print $1}')"
-        echo "Public IP address: $(curl -s -4 ifconfig.me)"
-
     - name: Install tmole
       run: |
         curl -O https://install.tunnelmole.com/n3d5g/install && sudo bash install
