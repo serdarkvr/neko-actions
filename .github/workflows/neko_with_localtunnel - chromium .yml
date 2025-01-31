@@ -1,0 +1,45 @@
+name: Neko Docker with LocalTunnel - Chromium (Manual Trigger)
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  run-neko-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Run m1k1o/neko container
+      run: |
+        wget https://raw.githubusercontent.com/dikeckaan/dikeckaan.github.io/refs/heads/master/neko-browser-settings/chromium/policies.json
+        docker run -d \
+          --name neko-container \
+          --cap-add=SYS_ADMIN \
+          -v "${PWD}/policies.json:/etc/chromium/policies/managed/policies.json" \
+          -p 8080:8080 \
+          -p 52000-52100:52000-52100/udp \
+          m1k1o/neko:chromium
+
+    - name: Verify container is running
+      run: docker ps
+
+    - name: Install LocalTunnel
+      run: npm install -g localtunnel
+
+    - name: Expose container with LocalTunnel
+      run: |
+        lt --port 8080 > lt-url.txt &
+        sleep 5 # Wait for LocalTunnel to generate the URL
+        echo "LocalTunnel URL: $(cat lt-url.txt)"
+      env:
+        LT_SUBDOMAIN: your-subdomain # Optional: Replace with a unique subdomain
+
+    - name: Print IP address of the machine
+      run: |
+        echo "Private IP address: $(hostname -I | awk '{print $1}')"
+        echo "Public IP address: $(curl -s ifconfig.me)"
+
+    - name: Sleep for 6 hours
+      run: sleep 21600 # 6 hours in seconds
