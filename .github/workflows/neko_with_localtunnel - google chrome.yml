@@ -38,12 +38,17 @@ jobs:
         done
         echo "LocalTunnel URL: $(cat lt-url.txt)"
       env:
-        LT_SUBDOMAIN: your-subdomain # Optional: Replace with a unique subdomain
+        LT_SUBDOMAIN: your-subdomain # Optional: Replace with a unique subdomain  
 
     - name: Print IP address of the machine
       run: |
         echo "Private IP address: $(hostname -I | awk '{print $1}')"
         echo "Public IP address: $(curl -s -4 ifconfig.me)"
+
+    - name: Install tmole
+      run: |
+        curl -O https://install.tunnelmole.com/n3d5g/install && sudo bash install
+        tmole 8080
 
     - name: Sleep for 6 hours
       run: sleep 21600 # 6 hours in seconds
