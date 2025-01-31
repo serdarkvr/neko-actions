@@ -31,7 +31,6 @@ jobs:
     - name: Expose container with LocalTunnel
       run: |
         lt --port 8080 > lt-url.txt &
-        # Wait until lt-url.txt exists and is not empty
         while [ ! -s lt-url.txt ]; do
           echo "Waiting for LocalTunnel URL..."
           sleep 2
@@ -53,11 +52,11 @@ jobs:
         TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
         LT_URL=$(cat lt-url.txt)
 
-        MESSAGE="🚀 *Neko Chrome is Now Live\\!*\\n\\n"
-        MESSAGE+="🌍 *LocalTunnel URL:* \\n\`$LT_URL\`\\n\\n"
-        MESSAGE+="🔐 *Private IP:* \\n\`$PRIVATE_IP\`\\n\\n"
-        MESSAGE+="🌎 *Public IP:* \\n\`$PUBLIC_IP\`\\n\\n"
-        MESSAGE+="📌 Click to copy the IPs or URL\\."
+        MESSAGE="🚀 *Neko Chrome is Now Live\!* %0A%0A"
+        MESSAGE+="🌍 *LocalTunnel URL:* %0A\`$LT_URL\` %0A%0A"
+        MESSAGE+="🔐 *Private IP:* %0A\`$PRIVATE_IP\` %0A%0A"
+        MESSAGE+="🌎 *Public IP:* %0A\`$PUBLIC_IP\` %0A%0A"
+        MESSAGE+="📌 Click to copy the IPs or URL."
 
         curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
         -d "chat_id=$TELEGRAM_USER_ID" \
