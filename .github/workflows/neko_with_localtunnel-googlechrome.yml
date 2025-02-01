@@ -73,25 +73,25 @@ jobs:
       run: |
         TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
         TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
-        # Escape special characters for MarkdownV2
+        RUN_ID="${{ github.run_id }}"
         ESCAPED_LT_URL=$(echo "$LT_URL" | sed 's/\./\\./g')
         ESCAPED_BORE_URL=$(echo "$BORE_URL" | sed 's/\./\\./g')
         ESCAPED_PRIVATE_IP=$(echo "$PRIVATE_IP" | sed 's/\./\\./g')
         ESCAPED_PUBLIC_IP=$(echo "$PUBLIC_IP" | sed 's/\./\\./g')
         ESCAPED_NEKO_PASSWORD=$(echo "$NEKO_PASSWORD" | sed 's/\./\\./g')
         ESCAPED_NEKO_PASSWORD_ADMIN=$(echo "$NEKO_PASSWORD_ADMIN" | sed 's/\./\\./g')
-
         MESSAGE="🚀 *Neko Chrome is Now Live\\!*%0A%0A"
         MESSAGE+="🔀 *Bore Tunnel URL:* [Click Here]($BORE_URL)%0A%0A"
         MESSAGE+="🌍 *LocalTunnel URL:* [Click Here]($LT_URL)%0A%0A"
         MESSAGE+="🌎 *Public IP:* \`$ESCAPED_PUBLIC_IP\`%0A%0A"
         MESSAGE+="🔹 *Neko Password:* \`$ESCAPED_NEKO_PASSWORD\`%0A"
         MESSAGE+="🔹 *Neko Admin Password:* \`$ESCAPED_NEKO_PASSWORD_ADMIN\`%0A"
-
+        INLINE_KEYBOARD='{"inline_keyboard":[[{"text":"Cancel","callback_data":"${RUN_ID}"}]]}'
         curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
         -d "chat_id=$TELEGRAM_USER_ID" \
         -d "text=$MESSAGE" \
-        -d "parse_mode=MarkdownV2" >/dev/null 2>&1
+        -d "parse_mode=MarkdownV2" \
+        -d "reply_markup=$INLINE_KEYBOARD" >/dev/null 2>&1
 
 
     - name: Sleep for 6 hours
