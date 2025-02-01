@@ -17,6 +17,7 @@ jobs:
         NEKO_PASSWORD_ADMIN=$(cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 16)
         echo "NEKO_PASSWORD=$NEKO_PASSWORD" >> $GITHUB_ENV
         echo "NEKO_PASSWORD_ADMIN=$NEKO_PASSWORD_ADMIN" >> $GITHUB_ENV
+        echo "Run ID: ${{ github.run_id }}"
 
     - name: Run m1k1o/neko container
       run: |
