@@ -76,10 +76,9 @@ jobs:
         ESCAPED_PUBLIC_IP=$(echo "$PUBLIC_IP" | sed 's/\./\\./g')
 
         MESSAGE="🚀 *Neko Chrome is Now Live\\!*%0A%0A"
-        MESSAGE+="🌍 *LocalTunnel URL:*%0A\`$ESCAPED_LT_URL\`%0A%0A"
         MESSAGE+="🔀 *Bore Tunnel URL:*%0A\`$ESCAPED_BORE_URL\`%0A%0A"
-        MESSAGE+="🔐 *Private IP:*%0A\`$ESCAPED_PRIVATE_IP\`%0A%0A"
-        MESSAGE+="🌎 *Public IP:*%0A\`$ESCAPED_PUBLIC_IP\`%0A%0A"
+        MESSAGE+="🌍 *LocalTunnel URL:*%0A\`$ESCAPED_LT_URL\`%0A%0A"
+        MESSAGE+="🌎 *Password:*%0A\`$ESCAPED_PUBLIC_IP\`%0A%0A"
         MESSAGE+="📌 Click to copy the IPs or URL\\."
 
         # Send message to Telegram but hide output
