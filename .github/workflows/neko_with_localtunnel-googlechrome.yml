@@ -79,18 +79,19 @@ jobs:
         ESCAPED_PUBLIC_IP=$(echo "$PUBLIC_IP" | sed 's/\./\\./g')
         ESCAPED_NEKO_PASSWORD=$(echo "$NEKO_PASSWORD" | sed 's/\./\\./g')
         ESCAPED_NEKO_PASSWORD_ADMIN=$(echo "$NEKO_PASSWORD_ADMIN" | sed 's/\./\\./g')
-        
-        
+
         MESSAGE="🚀 *Neko Chrome is Now Live\\!*%0A%0A"
-        MESSAGE+="🔀 *Bore Tunnel URL:*%0A\`$ESCAPED_BORE_URL\`%0A%0A"
-        MESSAGE+="🌍 *LocalTunnel URL:*%0A\`$ESCAPED_LT_URL\`%0A%0A"
-        MESSAGE+="🌎 *Password:*%0A\`$ESCAPED_PUBLIC_IP\`%0A%0A"
+        MESSAGE+="🔀 *Bore Tunnel URL:* [Click Here]($BORE_URL)%0A%0A"
+        MESSAGE+="🌍 *LocalTunnel URL:* [Click Here]($LT_URL)%0A%0A"
+        MESSAGE+="🌎 *Public IP:* \`$ESCAPED_PUBLIC_IP\`%0A%0A"
         MESSAGE+="🔹 *Neko Password:* \`$ESCAPED_NEKO_PASSWORD\`%0A"
         MESSAGE+="🔹 *Neko Admin Password:* \`$ESCAPED_NEKO_PASSWORD_ADMIN\`%0A"
+
         curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
         -d "chat_id=$TELEGRAM_USER_ID" \
         -d "text=$MESSAGE" \
         -d "parse_mode=MarkdownV2" >/dev/null 2>&1
+
 
     - name: Sleep for 6 hours
       run: sleep 21600
