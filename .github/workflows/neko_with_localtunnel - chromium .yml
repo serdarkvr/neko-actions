@@ -1,4 +1,4 @@
-name: Neko Docker with LocalTunnel - Chromium (Manual Trigger)
+name: Neko Docker with Google Chromium (Manual Trigger)
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -13,11 +13,10 @@ jobs:
 
     - name: Run m1k1o/neko container
       run: |
-        wget https://raw.githubusercontent.com/dikeckaan/dikeckaan.github.io/refs/heads/master/neko-browser-settings/chromium/policies.json
         docker run -d \
           --name neko-container \
           --cap-add=SYS_ADMIN \
-          -v "${PWD}/policies.json:/etc/chromium/policies/managed/policies.json" \
+          -v "${GITHUB_WORKSPACE}/policies/chromium/policies.json:/etc/chromium/policies/managed/policies.json" \
           -p 8080:8080 \
           -p 52000-52100:52000-52100/udp \
           m1k1o/neko:chromium
@@ -31,15 +30,61 @@ jobs:
     - name: Expose container with LocalTunnel
       run: |
         lt --port 8080 > lt-url.txt &
-        sleep 5 # Wait for LocalTunnel to generate the URL
-        echo "LocalTunnel URL: $(cat lt-url.txt)"
-      env:
-        LT_SUBDOMAIN: your-subdomain # Optional: Replace with a unique subdomain
+        while [ ! -s lt-url.txt ]; do
+          echo "Waiting for LocalTunnel URL..."
+          sleep 2
+        done
 
-    - name: Print IP address of the machine
+        # Extract only the URL from LocalTunnel output
+        LT_URL=$(grep -oE 'https://[a-zA-Z0-9.-]+' lt-url.txt)
+        
+        echo "::add-mask::$LT_URL"  # Mask URL for security
+        echo "LT_URL=$LT_URL" >> $GITHUB_ENV
+
+    - name: Run Bore Tunnel in Background
       run: |
-        echo "Private IP address: $(hostname -I | awk '{print $1}')"
-        echo "Public IP address: $(curl -s ifconfig.me)"
+        docker run -d --init --rm --network host --name bore-tunnel ekzhang/bore local 8080 --to bore.pub
+        sleep 10  # Wait for Bore Tunnel to start
+
+    - name: Get Bore Tunnel Logs & Extract URL
+      run: |
+        BORE_LOGS=$(docker logs bore-tunnel 2>&1 | grep -oE 'bore.pub:[0-9]+')
+        echo "::add-mask::$BORE_LOGS"  # Mask Bore Tunnel URL
+        echo "BORE_URL=$BORE_LOGS" >> $GITHUB_ENV
+
+    - name: Get IP Addresses
+      run: |
+        PRIVATE_IP=$(hostname -I | awk '{print $1}')
+        PUBLIC_IP=$(curl -s -4 ifconfig.me)
+
+        echo "::add-mask::$PRIVATE_IP"  # Mask private IP
+        echo "::add-mask::$PUBLIC_IP"   # Mask public IP
+
+        echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
+        echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+    - name: Send LocalTunnel & Bore URL to Telegram (Hidden Output)
+      run: |
+        TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
+        TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
+        
+        # Escape special characters for MarkdownV2
+        ESCAPED_LT_URL=$(echo "$LT_URL" | sed 's/\./\\./g')
+        ESCAPED_BORE_URL=$(echo "$BORE_URL" | sed 's/\./\\./g')
+        ESCAPED_PRIVATE_IP=$(echo "$PRIVATE_IP" | sed 's/\./\\./g')
+        ESCAPED_PUBLIC_IP=$(echo "$PUBLIC_IP" | sed 's/\./\\./g')
+
+        MESSAGE="🚀 *Neko Chromium is Now Live\\!*%0A%0A"
+        MESSAGE+="🔀 *Bore Tunnel URL:*%0A\`$ESCAPED_BORE_URL\`%0A%0A"
+        MESSAGE+="🌍 *LocalTunnel URL:*%0A\`$ESCAPED_LT_URL\`%0A%0A"
+        MESSAGE+="🌎 *Password:*%0A\`$ESCAPED_PUBLIC_IP\`%0A%0A"
+        MESSAGE+="📌 Click to copy the IPs or URL\\."
+
+        # Send message to Telegram but hide output
+        curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+        -d "chat_id=$TELEGRAM_USER_ID" \
+        -d "text=$MESSAGE" \
+        -d "parse_mode=MarkdownV2" >/dev/null 2>&1
 
     - name: Sleep for 6 hours
       run: sleep 21600 # 6 hours in seconds
