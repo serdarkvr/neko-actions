@@ -13,11 +13,10 @@ jobs:
 
     - name: Run m1k1o/neko container
       run: |
-        wget https://raw.githubusercontent.com/dikeckaan/dikeckaan.github.io/refs/heads/master/neko-browser-settings/chromium/policies.json
         docker run -d \
           --name neko-container \
           --cap-add=SYS_ADMIN \
-          -v "${PWD}/policies.json:/etc/opt/chrome/policies/managed/policies.json" \
+          -v "${GITHUB_WORKSPACE}/policies/chromium/policies.json:/etc/opt/chrome/policies/managed/policies.json" \
           -p 8080:8080 \
           -p 52000-52100:52000-52100/udp \
           m1k1o/neko:google-chrome
