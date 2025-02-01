@@ -35,8 +35,11 @@ jobs:
           echo "Waiting for LocalTunnel URL..."
           sleep 2
         done
-        LT_URL=$(cat lt-url.txt)
-        echo "::add-mask::$LT_URL"  # Mask URL
+
+        # Extract only the URL from LocalTunnel output
+        LT_URL=$(grep -oE 'https://[a-zA-Z0-9.-]+' lt-url.txt)
+        
+        echo "::add-mask::$LT_URL"  # Mask URL for security
         echo "LT_URL=$LT_URL" >> $GITHUB_ENV
 
     - name: Get IP Addresses
@@ -50,7 +53,7 @@ jobs:
         echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
         echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
-    - name: Send LocalTunnel URL & IP to Telegram
+    - name: Send LocalTunnel URL & IP to Telegram (Hidden Output)
       run: |
         TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
         TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
@@ -66,10 +69,11 @@ jobs:
         MESSAGE+="🌎 *Public IP:*%0A\`$ESCAPED_PUBLIC_IP\`%0A%0A"
         MESSAGE+="📌 Click to copy the IPs or URL\\."
 
+        # Send message to Telegram but hide output
         curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
         -d "chat_id=$TELEGRAM_USER_ID" \
         -d "text=$MESSAGE" \
-        -d "parse_mode=MarkdownV2"
+        -d "parse_mode=MarkdownV2" >/dev/null 2>&1
 
     - name: Sleep for 6 hours
       run: sleep 21600 # 6 hours in seconds
