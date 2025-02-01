@@ -1,4 +1,4 @@
-name: Neko Docker with LocalTunnel - Google Chrome (Manual Trigger)
+name: Neko Docker with LocalTunnel & Bore - Google Chrome (Manual Trigger)
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -42,6 +42,17 @@ jobs:
         echo "::add-mask::$LT_URL"  # Mask URL for security
         echo "LT_URL=$LT_URL" >> $GITHUB_ENV
 
+    - name: Run Bore Tunnel in Background
+      run: |
+        docker run -d --init --rm --network host --name bore-tunnel ekzhang/bore local 8080 --to bore.pub
+        sleep 10  # Wait for Bore Tunnel to start
+
+    - name: Get Bore Tunnel Logs & Extract URL
+      run: |
+        BORE_LOGS=$(docker logs bore-tunnel 2>&1 | grep -oE 'bore.pub:[0-9]+')
+        echo "::add-mask::$BORE_LOGS"  # Mask Bore Tunnel URL
+        echo "BORE_URL=$BORE_LOGS" >> $GITHUB_ENV
+
     - name: Get IP Addresses
       run: |
         PRIVATE_IP=$(hostname -I | awk '{print $1}')
@@ -53,18 +64,20 @@ jobs:
         echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
         echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
-    - name: Send LocalTunnel URL & IP to Telegram (Hidden Output)
+    - name: Send LocalTunnel & Bore URL to Telegram (Hidden Output)
       run: |
         TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
         TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
         
         # Escape special characters for MarkdownV2
         ESCAPED_LT_URL=$(echo "$LT_URL" | sed 's/\./\\./g')
+        ESCAPED_BORE_URL=$(echo "$BORE_URL" | sed 's/\./\\./g')
         ESCAPED_PRIVATE_IP=$(echo "$PRIVATE_IP" | sed 's/\./\\./g')
         ESCAPED_PUBLIC_IP=$(echo "$PUBLIC_IP" | sed 's/\./\\./g')
 
         MESSAGE="🚀 *Neko Chrome is Now Live\\!*%0A%0A"
         MESSAGE+="🌍 *LocalTunnel URL:*%0A\`$ESCAPED_LT_URL\`%0A%0A"
+        MESSAGE+="🔀 *Bore Tunnel URL:*%0A\`$ESCAPED_BORE_URL\`%0A%0A"
         MESSAGE+="🔐 *Private IP:*%0A\`$ESCAPED_PRIVATE_IP\`%0A%0A"
         MESSAGE+="🌎 *Public IP:*%0A\`$ESCAPED_PUBLIC_IP\`%0A%0A"
         MESSAGE+="📌 Click to copy the IPs or URL\\."
