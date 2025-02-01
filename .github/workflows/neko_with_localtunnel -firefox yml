@@ -1,4 +1,4 @@
-name: Neko Docker with Google Chrome (Manual Trigger)
+name: Neko Docker with Google Firefox (Manual Trigger)
 
 on:
   workflow_dispatch: # Allows manual triggering
