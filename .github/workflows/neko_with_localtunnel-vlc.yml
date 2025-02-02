@@ -29,7 +29,7 @@ jobs:
           -v "${GITHUB_WORKSPACE}/policies/chromium/policies.json:/etc/opt/chrome/policies/managed/policies.json" \
           -p 8080:8080 \
           -p 52000-52100:52000-52100/udp \
-          m1k1o/neko:google-chrome
+          m1k1o/neko:vlc
 
     - name: Verify container is running
       run: docker ps
