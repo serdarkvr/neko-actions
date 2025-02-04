@@ -30,10 +30,12 @@ jobs:
         echo "NEKO_PASSWORD=$NEKO_PASSWORD" >> $GITHUB_ENV
         echo "NEKO_PASSWORD_ADMIN=$NEKO_PASSWORD_ADMIN" >> $GITHUB_ENV
 
-    - name: Mask Telegram Bot Token
+    - name: Mask Sensitive Inputs
       run: |
         echo "::add-mask::${{ github.event.inputs.bottoken }}"
+        echo "::add-mask::${{ github.event.inputs.chatid }}"
         echo "TELEGRAM_BOT_TOKEN=${{ github.event.inputs.bottoken }}" >> $GITHUB_ENV
+        echo "TELEGRAM_USER_ID=${{ github.event.inputs.chatid }}" >> $GITHUB_ENV
 
     - name: Run m1k1o/neko container
       run: |
@@ -88,7 +90,7 @@ jobs:
     - name: Send Credentials to Telegram
       env:
         TELEGRAM_BOT_TOKEN: ${{ env.TELEGRAM_BOT_TOKEN }}
-        TELEGRAM_USER_ID: ${{ github.event.inputs.chatid }}
+        TELEGRAM_USER_ID: ${{ env.TELEGRAM_USER_ID }}
       run: |
         RUN_ID="${{ github.run_id }}"
         
