@@ -49,16 +49,12 @@ jobs:
           -p 8080:8080 \
           -p 52000-52100:52000-52100/udp \
           m1k1o/neko:${{ github.event.inputs.image }}
-          docker exec -it neko-container bash -c "
-          # Root yetkisi al
-          sudo su || su
-          # Paket listesini güncelle
-          apt update
-          # unclutter paketini kur
-          apt install -y unclutter
-          # unclutter komutunu xprofile'a ekle
-          echo 'unclutter -idle 0 -root -noevents &' >> ~/.xprofile"
-
+          docker exec neko-container bash -c "
+            sudo su || su
+            apt update
+            apt install -y unclutter
+            echo 'unclutter -idle 0 -root -noevents &' >> ~/.xprofile"
+          
     - name: Verify container is running
       run: docker ps
 
