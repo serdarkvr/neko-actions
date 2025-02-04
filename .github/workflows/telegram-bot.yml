@@ -1,4 +1,4 @@
-name: Neko Docker with Google Chrome (Manual Trigger)
+name: Neko Docker Telegram Bot (Bot Trigger)
 
 on:
   workflow_dispatch:
