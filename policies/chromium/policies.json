@@ -19,17 +19,15 @@
   "BookmarkBarEnabled": true,
   "PasswordManagerEnabled": true,
   "BrowserLabsEnabled": true,
-  "URLAllowlist": ["*"],
-},
+  "URLAllowlist": [
+    "*"
+  ],
   "ExtensionInstallForcelist": [
-      "cjpalhdlnbpafiamejdnhcphjbkeiagm;https://clients2.google.com/service/update2/crx",
-      "mnjggcdmjocbbbhaepdhchncahnbgone;https://clients2.google.com/service/update2/crx",
-      "bihmplhobchoageeokmgbdihknkjbknd;https://clients2.google.com/service/update2/crx"
+    "cjpalhdlnbpafiamejdnhcphjbkeiagm;https://clients2.google.com/service/update2/crx",
+    "mnjggcdmjocbbbhaepdhchncahnbgone;https://clients2.google.com/service/update2/crx",
+    "bihmplhobchoageeokmgbdihknkjbknd;https://clients2.google.com/service/update2/crx"
   ],
   "ExtensionInstallAllowlist": [
-      "cjpalhdlnbpafiamejdnhcphjbkeiagm",
-      "mnjggcdmjocbbbhaepdhchncahnbgone",
-      "*"
+    "*"
   ]
-  
 }
