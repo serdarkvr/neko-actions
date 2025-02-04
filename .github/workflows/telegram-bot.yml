@@ -1,4 +1,4 @@
-name: Neko Docker Telegram (Telegram Trigger)
+name: Neko Docker with Google Chrome (Manual Trigger)
 
 on:
   workflow_dispatch:
@@ -29,6 +29,11 @@ jobs:
         echo "::add-mask::$NEKO_PASSWORD_ADMIN"
         echo "NEKO_PASSWORD=$NEKO_PASSWORD" >> $GITHUB_ENV
         echo "NEKO_PASSWORD_ADMIN=$NEKO_PASSWORD_ADMIN" >> $GITHUB_ENV
+
+    - name: Mask Telegram Bot Token
+      run: |
+        echo "::add-mask::${{ github.event.inputs.bottoken }}"
+        echo "TELEGRAM_BOT_TOKEN=${{ github.event.inputs.bottoken }}" >> $GITHUB_ENV
 
     - name: Run m1k1o/neko container
       run: |
@@ -81,26 +86,21 @@ jobs:
         echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
     - name: Send Credentials to Telegram
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ env.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_USER_ID: ${{ github.event.inputs.chatid }}
       run: |
-        TELEGRAM_BOT_TOKEN="${{ github.event.inputs.bottoken }}"
-        TELEGRAM_USER_ID="${{ github.event.inputs.chatid }}"
         RUN_ID="${{ github.run_id }}"
-        ESCAPED_LT_URL=$(echo "$LT_URL" | sed 's/\./\\./g')
-        ESCAPED_BORE_URL=$(echo "$BORE_URL" | sed 's/\./\\./g')
-        ESCAPED_PRIVATE_IP=$(echo "$PRIVATE_IP" | sed 's/\./\\./g')
-        ESCAPED_PUBLIC_IP=$(echo "$PUBLIC_IP" | sed 's/\./\\./g')
-        ESCAPED_NEKO_PASSWORD=$(echo "$NEKO_PASSWORD" | sed 's/\./\\./g')
-        ESCAPED_NEKO_PASSWORD_ADMIN=$(echo "$NEKO_PASSWORD_ADMIN" | sed 's/\./\\./g')
-        ESCAPED_RUN_ID=$(echo "$RUN_ID" | sed 's/\./\\./g')
         
         MESSAGE="🚀 *Neko Chrome is Now Live\\!*%0A%0A"
         MESSAGE+="🔀 *Bore Tunnel URL:* [Click Here]($BORE_URL)%0A%0A"
         MESSAGE+="🌍 *LocalTunnel URL:* [Click Here]($LT_URL)%0A%0A"
-        MESSAGE+="🌎 *Public IP:* \`$ESCAPED_PUBLIC_IP\`%0A%0A"
-        MESSAGE+="🔹 *Neko Password:* \`$ESCAPED_NEKO_PASSWORD\`%0A"
-        MESSAGE+="🔹 *Neko Admin Password:* \`$ESCAPED_NEKO_PASSWORD_ADMIN\`%0A%0A"
-        MESSAGE+="🆔 *Run ID:* %0A\`\`\`$ESCAPED_RUN_ID\`\`\`%0A"
-        INLINE_KEYBOARD='{"inline_keyboard":[[{"text":"Cancel","callback_data":"'"$ESCAPED_RUN_ID"'"}]]}'
+        MESSAGE+="🌎 *Public IP:* \`$PUBLIC_IP\`%0A%0A"
+        MESSAGE+="🔹 *Neko Password:* \`$NEKO_PASSWORD\`%0A"
+        MESSAGE+="🔹 *Neko Admin Password:* \`$NEKO_PASSWORD_ADMIN\`%0A%0A"
+        MESSAGE+="🆔 *Run ID:* %0A\`\`\`$RUN_ID\`\`\`%0A"
+        INLINE_KEYBOARD='{"inline_keyboard":[[{"text":"Cancel","callback_data":"'"$RUN_ID"'"}]]}'
+
         curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
         -d "chat_id=$TELEGRAM_USER_ID" \
         -d "text=$MESSAGE" \
