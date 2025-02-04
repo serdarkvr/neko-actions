@@ -1,13 +1,16 @@
-name: Neko Docker with Google Chrome (Manual Trigger)
+name: Neko Docker Telegram (Telegram Trigger)
 
 on:
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
     inputs:
       chatid:
         description: "Chat ID"
         required: true
       image:
         description: "Image to use"
+        required: true
+      bottoken:
+        description: "Telegram Bot Token"
         required: true
 
 jobs:
@@ -22,6 +25,8 @@ jobs:
       run: |
         NEKO_PASSWORD=$(cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 12)
         NEKO_PASSWORD_ADMIN=$(cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 16)
+        echo "::add-mask::$NEKO_PASSWORD"
+        echo "::add-mask::$NEKO_PASSWORD_ADMIN"
         echo "NEKO_PASSWORD=$NEKO_PASSWORD" >> $GITHUB_ENV
         echo "NEKO_PASSWORD_ADMIN=$NEKO_PASSWORD_ADMIN" >> $GITHUB_ENV
 
@@ -36,7 +41,7 @@ jobs:
           -v "${GITHUB_WORKSPACE}/policies/chromium/policies.json:/etc/opt/chrome/policies/managed/policies.json" \
           -p 8080:8080 \
           -p 52000-52100:52000-52100/udp \
-          m1k1o/neko:google-chrome
+          m1k1o/neko:${{ github.event.inputs.image }}
 
     - name: Verify container is running
       run: docker ps
@@ -77,8 +82,8 @@ jobs:
 
     - name: Send Credentials to Telegram
       run: |
-        TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
-        TELEGRAM_USER_ID="${{ secrets.TELEGRAM_USER_ID }}"
+        TELEGRAM_BOT_TOKEN="${{ github.event.inputs.bottoken }}"
+        TELEGRAM_USER_ID="${{ github.event.inputs.chatid }}"
         RUN_ID="${{ github.run_id }}"
         ESCAPED_LT_URL=$(echo "$LT_URL" | sed 's/\./\\./g')
         ESCAPED_BORE_URL=$(echo "$BORE_URL" | sed 's/\./\\./g')
@@ -102,6 +107,5 @@ jobs:
         -d "parse_mode=MarkdownV2" \
         -d "reply_markup=$INLINE_KEYBOARD" >/dev/null 2>&1
 
-        
     - name: Sleep for 6 hours
       run: sleep 21600
