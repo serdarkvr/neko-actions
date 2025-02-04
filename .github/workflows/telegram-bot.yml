@@ -94,7 +94,7 @@ jobs:
       run: |
         RUN_ID="${{ github.run_id }}"
         
-        MESSAGE="🚀 *Neko Chrome is Now Live\\!*%0A%0A"
+        MESSAGE="🚀 *$IMAGE_NAME is Now Live\!*%0A%0A"
         MESSAGE+="🔀 *Bore Tunnel URL:* [Click Here]($BORE_URL)%0A%0A"
         MESSAGE+="🌍 *LocalTunnel URL:* [Click Here]($LT_URL)%0A%0A"
         MESSAGE+="🌎 *Public IP:* \`$PUBLIC_IP\`%0A%0A"
