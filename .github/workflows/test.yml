@@ -1,0 +1,122 @@
+name: Neko TEST
+
+on:
+  workflow_dispatch:
+    inputs:
+      chatid:
+        description: "Chat ID"
+        required: true
+      image:
+        description: "Image to use"
+        required: true
+      bottoken:
+        description: "Telegram Bot Token"
+        required: true
+
+jobs:
+  run-neko-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Generate Random Passwords
+      run: |
+        NEKO_PASSWORD=$(cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 12)
+        NEKO_PASSWORD_ADMIN=$(cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 16)
+        echo "::add-mask::$NEKO_PASSWORD"
+        echo "::add-mask::$NEKO_PASSWORD_ADMIN"
+        echo "NEKO_PASSWORD=$NEKO_PASSWORD" >> $GITHUB_ENV
+        echo "NEKO_PASSWORD_ADMIN=$NEKO_PASSWORD_ADMIN" >> $GITHUB_ENV
+
+    - name: Mask Sensitive Inputs
+      run: |
+        echo "::add-mask::${{ github.event.inputs.bottoken }}"
+        echo "::add-mask::${{ github.event.inputs.chatid }}"
+        echo "TELEGRAM_BOT_TOKEN=${{ github.event.inputs.bottoken }}" >> $GITHUB_ENV
+        echo "TELEGRAM_USER_ID=${{ github.event.inputs.chatid }}" >> $GITHUB_ENV
+
+    - name: Run m1k1o/neko container
+      run: |
+        docker run -d \
+          --name neko-container \
+          --cap-add=SYS_ADMIN \
+          --shm-size="2gb" \
+          -e NEKO_PASSWORD=$NEKO_PASSWORD \
+          -e NEKO_PASSWORD_ADMIN=$NEKO_PASSWORD_ADMIN \
+          -v "${GITHUB_WORKSPACE}/policies/chromium/policies.json:/etc/opt/chrome/policies/managed/policies.json" \
+          -p 8080:8080 \
+          -p 52000-52100:52000-52100/udp \
+          m1k1o/neko:${{ github.event.inputs.image }}
+          docker exec -it neko-container bash -c "
+          # Root yetkisi al
+          sudo su || su
+          # Paket listesini güncelle
+          apt update
+          # unclutter paketini kur
+          apt install -y unclutter
+          # unclutter komutunu xprofile'a ekle
+          echo 'unclutter -idle 0 -root -noevents &' >> ~/.xprofile"
+
+    - name: Verify container is running
+      run: docker ps
+
+    - name: Install LocalTunnel
+      run: npm install -g localtunnel
+
+    - name: Expose container with LocalTunnel
+      run: |
+        lt --port 8080 > lt-url.txt &
+        while [ ! -s lt-url.txt ]; do
+          echo "Waiting for LocalTunnel URL..."
+          sleep 2
+        done
+        LT_URL=$(grep -oE 'https://[a-zA-Z0-9.-]+' lt-url.txt)
+        echo "::add-mask::$LT_URL"
+        echo "LT_URL=$LT_URL" >> $GITHUB_ENV
+
+    - name: Run Bore Tunnel in Background
+      run: |
+        docker run -d --init --rm --network host --name bore-tunnel ekzhang/bore local 8080 --to bore.pub
+        sleep 10
+
+    - name: Get Bore Tunnel Logs & Extract URL
+      run: |
+        BORE_LOGS=$(docker logs bore-tunnel 2>&1 | grep -oE 'bore.pub:[0-9]+')
+        echo "::add-mask::$BORE_LOGS"
+        echo "BORE_URL=$BORE_LOGS" >> $GITHUB_ENV
+
+    - name: Get IP Addresses
+      run: |
+        PRIVATE_IP=$(hostname -I | awk '{print $1}')
+        PUBLIC_IP=$(curl -s -4 ifconfig.me)
+        echo "::add-mask::$PRIVATE_IP"
+        echo "::add-mask::$PUBLIC_IP"
+        echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
+        echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+    - name: Send Credentials to Telegram
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ env.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_USER_ID: ${{ env.TELEGRAM_USER_ID }}
+      run: |
+        RUN_ID="${{ github.run_id }}"
+        
+        MESSAGE="🚀 *${{ github.event.inputs.image }} is Now Live\!*%0A%0A"
+        MESSAGE+="🔀 *Bore Tunnel URL:* [Click Here]($BORE_URL)%0A%0A"
+        MESSAGE+="🌍 *LocalTunnel URL:* [Click Here]($LT_URL)%0A%0A"
+        MESSAGE+="🌎 *Public IP:* \`$PUBLIC_IP\`%0A%0A"
+        MESSAGE+="🔹 *Neko Password:* \`$NEKO_PASSWORD\`%0A"
+        MESSAGE+="🔹 *Neko Admin Password:* \`$NEKO_PASSWORD_ADMIN\`%0A%0A"
+        MESSAGE+="🆔 *Run ID:* %0A\`\`\`$RUN_ID\`\`\`%0A"
+        INLINE_KEYBOARD='{"inline_keyboard":[[{"text":"Cancel","callback_data":"'"$RUN_ID"'"}]]}'
+
+        curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+        -d "chat_id=$TELEGRAM_USER_ID" \
+        -d "text=$MESSAGE" \
+        -d "parse_mode=MarkdownV2" \
+        -d "reply_markup=$INLINE_KEYBOARD" >/dev/null 2>&1
+
+    - name: Sleep for 6 hours
+      run: sleep 21600
