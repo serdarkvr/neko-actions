@@ -1,4 +1,4 @@
-name: Neko Docker Telegram Bot (Bot Trigger)
+name: Neko Docker test (Bot Trigger)
 
 on:
   workflow_dispatch:
